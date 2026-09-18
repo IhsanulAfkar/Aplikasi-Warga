@@ -1,0 +1,183 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String            @id @default(cuid())
+  username         String            @unique
+  password         String
+  role             String            @default("WARGA") // "ADMIN", "WARGA"
+  residentId       String?           @unique
+  resident         Resident?         @relation(fields: [residentId], references: [id], onDelete: SetNull)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  paymentsRecorded Payment[]         @relation("PaymentsRecorded")
+  announcements    Announcement[]
+  cashTransactions CashTransaction[]
+
+  @@index([role])
+}
+
+model FamilyCard {
+  id             String     @id @default(cuid())
+  nomorKK        String     @unique
+  kepalaKeluarga String
+  alamat         String
+  rt             String     @default("001")
+  rw             String     @default("005")
+  kelurahan      String     @default("Sukamaju")
+  kecamatan      String     @default("Cilodong")
+  kota           String     @default("Depok")
+  provinsi       String     @default("Jawa Barat")
+  kodePos        String?
+  statusRumah    String?    @default("MILIK_SENDIRI") // MILIK_SENDIRI, SEWA_KONTRAK, KOST, LAINNYA
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  members        Resident[]
+  duesBills      DuesBill[]
+
+  @@index([rt, rw])
+  @@index([isActive])
+}
+
+model Resident {
+  id               String      @id @default(cuid())
+  nik              String      @unique
+  nama             String
+  familyCardId     String
+  familyCard       FamilyCard  @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
+  hubunganKeluarga String      @default("KEPALA_KELUARGA") // KEPALA_KELUARGA, ISTRI, ANAK, ORANG_TUA, FAMILI_LAIN
+  jenisKelamin     String      @default("L") // L, P
+  tempatLahir      String
+  tanggalLahir     DateTime
+  agama            String?     @default("ISLAM")
+  statusPerkawinan String      @default("BELUM_KAWIN") // BELUM_KAWIN, KAWIN, CERAI_HIDUP, CERAI_MATI
+  pekerjaan        String?
+  noTelepon        String?
+  statusWarga      String      @default("AKTIF") // AKTIF, PINDAH, MENINGGAL
+  tanggalMasuk     DateTime?   @default(now())
+  user             User?
+  duesBills        DuesBill[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([familyCardId])
+  @@index([statusWarga])
+}
+
+model DuesType {
+  id               String       @id @default(cuid())
+  name             String
+  code             String       @unique
+  description      String?
+  amount           Int          @default(0) // base IDR
+  isFlexibleAmount Boolean      @default(false)
+  frequency        String       @default("MONTHLY") // ONCE, MONTHLY, YEARLY, CUSTOM
+  targetType       String       @default("PER_KK") // PER_KK, PER_RESIDENT
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  periods          DuesPeriod[]
+
+  @@index([isActive])
+}
+
+model DuesPeriod {
+  id           String     @id @default(cuid())
+  duesTypeId   String
+  duesType     DuesType   @relation(fields: [duesTypeId], references: [id], onDelete: Cascade)
+  periodName   String // e.g. "Januari 2026", "HUT RI 2026"
+  billingMonth Int? // 1-12
+  billingYear  Int
+  dueDate      DateTime
+  amount       Int
+  isClosed     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  bills        DuesBill[]
+
+  @@index([duesTypeId])
+  @@index([billingYear, billingMonth])
+}
+
+model DuesBill {
+  id                 String      @id @default(cuid())
+  periodId           String
+  period             DuesPeriod  @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  targetFamilyCardId String?
+  familyCard         FamilyCard? @relation(fields: [targetFamilyCardId], references: [id], onDelete: SetNull)
+  targetResidentId   String?
+  resident           Resident?   @relation(fields: [targetResidentId], references: [id], onDelete: SetNull)
+  amount             Int
+  status             String      @default("UNPAID") // UNPAID, PAID, OVERDUE
+  paidAt             DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  payment            Payment?
+
+  @@index([periodId])
+  @@index([targetFamilyCardId])
+  @@index([targetResidentId])
+  @@index([status])
+}
+
+model Payment {
+  id              String           @id @default(cuid())
+  billId          String           @unique
+  bill            DuesBill         @relation(fields: [billId], references: [id], onDelete: Cascade)
+  amountPaid      Int
+  paymentDate     DateTime         @default(now())
+  paymentMethod   String           @default("CASH") // CASH, TRANSFER
+  notes           String?
+  recordedById    String
+  recordedBy      User             @relation("PaymentsRecorded", fields: [recordedById], references: [id])
+  cashTransaction CashTransaction?
+  createdAt       DateTime         @default(now())
+
+  @@index([paymentDate])
+}
+
+model CashTransaction {
+  id              String   @id @default(cuid())
+  type            String // "INCOME", "EXPENSE"
+  category        String // "IURAN_WARGA", "DONASI", "OPERASIONAL", "KEGIATAN", "PEMELIHARAAN", "LAINNYA"
+  amount          Int
+  description     String
+  transactionDate DateTime @default(now())
+  proofUrl        String?
+  createdById     String
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  paymentId       String?  @unique
+  payment         Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  isReversed      Boolean  @default(false)
+  reversalReason  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([type])
+  @@index([transactionDate])
+  @@index([category])
+}
+
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  priority    String    @default("NORMAL") // "NORMAL", "IMPORTANT"
+  status      String    @default("PUBLISHED") // "DRAFT", "PUBLISHED", "ARCHIVED"
+  publishDate DateTime  @default(now())
+  expiryDate  DateTime?
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, publishDate])
+  @@index([priority])
+}
