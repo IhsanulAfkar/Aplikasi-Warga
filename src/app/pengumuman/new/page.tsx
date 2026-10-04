@@ -83,10 +83,10 @@ export default function NewAnnouncementPage() {
 
             <Button
               type="submit"
-              variant="primary"
+
               size="lg"
               className="w-full mt-4 font-semibold"
-              isLoading={isPending}
+              disabled={isPending}
             >
               Publikasikan Pengumuman
             </Button>

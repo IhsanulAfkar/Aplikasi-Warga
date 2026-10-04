@@ -1,7 +1,8 @@
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
+import 'dotenv/config'
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+
 
 async function main() {
   console.log("🌱 Cleaning database...");
@@ -374,7 +375,7 @@ async function main() {
   const kks = [kk1, kk2, kk3, kk4];
 
   // Helper to create bill + payment + cash transaction
-  async function createBillAndOptionalPayment(period, kk, isPaid, paymentDate, paymentMethod = "CASH") {
+  async function createBillAndOptionalPayment(period: any, kk: any, isPaid: any, paymentDate: any, paymentMethod = "CASH") {
     const bill = await prisma.duesBill.create({
       data: {
         periodId: period.id,

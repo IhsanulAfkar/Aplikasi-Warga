@@ -87,7 +87,7 @@ export function ReverseTransactionButton({ transactionId }: ReverseTransactionBu
             <Button
               type="button"
               variant="outline"
-              size="md"
+
               className="flex-1"
               onClick={() => setIsOpen(false)}
             >
@@ -95,10 +95,10 @@ export function ReverseTransactionButton({ transactionId }: ReverseTransactionBu
             </Button>
             <Button
               type="submit"
-              variant="danger"
-              size="md"
+              variant="destructive"
+
               className="flex-1 font-semibold"
-              isLoading={isLoading}
+              disabled={isLoading}
             >
               Ya, Batalkan
             </Button>

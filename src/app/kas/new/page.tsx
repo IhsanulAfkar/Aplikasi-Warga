@@ -40,22 +40,20 @@ export default function NewCashTransactionPage() {
           <button
             type="button"
             onClick={() => setType("INCOME")}
-            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${
-              type === "INCOME"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${type === "INCOME"
+              ? "bg-emerald-600 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             + Pemasukan (Income)
           </button>
           <button
             type="button"
             onClick={() => setType("EXPENSE")}
-            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${
-              type === "EXPENSE"
-                ? "bg-rose-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all ${type === "EXPENSE"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             - Pengeluaran (Expense)
           </button>
@@ -78,16 +76,16 @@ export default function NewCashTransactionPage() {
               options={
                 type === "INCOME"
                   ? [
-                      { value: "DONASI", label: "Donasi / Sumbangan Warga" },
-                      { value: "IURAN_WARGA", label: "Iuran Warga Manual" },
-                      { value: "LAINNYA", label: "Pemasukan Lainnya" },
-                    ]
+                    { value: "DONASI", label: "Donasi / Sumbangan Warga" },
+                    { value: "IURAN_WARGA", label: "Iuran Warga Manual" },
+                    { value: "LAINNYA", label: "Pemasukan Lainnya" },
+                  ]
                   : [
-                      { value: "OPERASIONAL", label: "Operasional & Gaji Petugas" },
-                      { value: "PEMELIHARAAN", label: "Pemeliharaan & Perbaikan Sarana" },
-                      { value: "KEGIATAN", label: "Kegiatan Lingkungan & Acara" },
-                      { value: "LAINNYA", label: "Pengeluaran Lainnya" },
-                    ]
+                    { value: "OPERASIONAL", label: "Operasional & Gaji Petugas" },
+                    { value: "PEMELIHARAAN", label: "Pemeliharaan & Perbaikan Sarana" },
+                    { value: "KEGIATAN", label: "Kegiatan Lingkungan & Acara" },
+                    { value: "LAINNYA", label: "Pengeluaran Lainnya" },
+                  ]
               }
             />
 
@@ -116,10 +114,10 @@ export default function NewCashTransactionPage() {
 
             <Button
               type="submit"
-              variant={type === "INCOME" ? "primary" : "danger"}
+              variant={type === "INCOME" ? "default" : "destructive"}
               size="lg"
               className="w-full mt-4 font-semibold"
-              isLoading={isPending}
+              disabled={isPending}
             >
               Simpan {type === "INCOME" ? "Pemasukan" : "Pengeluaran"}
             </Button>

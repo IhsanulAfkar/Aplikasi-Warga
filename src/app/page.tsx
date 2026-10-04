@@ -26,6 +26,7 @@ import {
   AlertCircle,
   FileText,
 } from "lucide-react";
+import { FloatingAIChat } from "@/components/chat";
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
@@ -267,11 +268,10 @@ export default async function AdminDashboardPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                        isIncome
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-rose-50 text-rose-600"
-                      }`}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isIncome
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-rose-50 text-rose-600"
+                        }`}
                     >
                       {isIncome ? (
                         <ArrowDownRight className="w-5 h-5" />
@@ -293,9 +293,8 @@ export default async function AdminDashboardPage() {
 
                   <div className="text-right shrink-0 ml-2">
                     <span
-                      className={`text-xs font-bold ${
-                        isIncome ? "text-emerald-600" : "text-slate-900"
-                      }`}
+                      className={`text-xs font-bold ${isIncome ? "text-emerald-600" : "text-slate-900"
+                        }`}
                     >
                       {isIncome ? "+" : "-"} {formatRupiah(tx.amount)}
                     </span>
@@ -307,6 +306,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
+      <FloatingAIChat />
       <BottomNav role="ADMIN" />
     </MobileFrame>
   );

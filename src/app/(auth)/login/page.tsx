@@ -82,10 +82,9 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                variant="primary"
                 size="lg"
                 className="w-full mt-2 font-semibold"
-                isLoading={isPending}
+                disabled={isPending}
               >
                 Masuk Sekarang
               </Button>

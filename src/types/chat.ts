@@ -1,0 +1,1 @@
+export type AffectedModel = "announcement" | "cash_transaction" | "dues_bill" | "dues_type" | "dues_period" | "family_card" | "payment" | "resident"

@@ -1,10 +1,10 @@
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
-generator client {
-  provider = "prisma-client-js"
+datasource db {
+  provider = "postgresql"
 }
 
 model User {
@@ -19,6 +19,7 @@ model User {
   paymentsRecorded Payment[]         @relation("PaymentsRecorded")
   announcements    Announcement[]
   cashTransactions CashTransaction[]
+  chatHistories    ChatHistory[]
 
   @@index([role])
 }
@@ -47,25 +48,25 @@ model FamilyCard {
 }
 
 model Resident {
-  id               String      @id @default(cuid())
-  nik              String      @unique
+  id               String     @id @default(cuid())
+  nik              String     @unique
   nama             String
   familyCardId     String
-  familyCard       FamilyCard  @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
-  hubunganKeluarga String      @default("KEPALA_KELUARGA") // KEPALA_KELUARGA, ISTRI, ANAK, ORANG_TUA, FAMILI_LAIN
-  jenisKelamin     String      @default("L") // L, P
+  familyCard       FamilyCard @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
+  hubunganKeluarga String     @default("KEPALA_KELUARGA") // KEPALA_KELUARGA, ISTRI, ANAK, ORANG_TUA, FAMILI_LAIN
+  jenisKelamin     String     @default("L") // L, P
   tempatLahir      String
   tanggalLahir     DateTime
-  agama            String?     @default("ISLAM")
-  statusPerkawinan String      @default("BELUM_KAWIN") // BELUM_KAWIN, KAWIN, CERAI_HIDUP, CERAI_MATI
+  agama            String?    @default("ISLAM")
+  statusPerkawinan String     @default("BELUM_KAWIN") // BELUM_KAWIN, KAWIN, CERAI_HIDUP, CERAI_MATI
   pekerjaan        String?
   noTelepon        String?
-  statusWarga      String      @default("AKTIF") // AKTIF, PINDAH, MENINGGAL
-  tanggalMasuk     DateTime?   @default(now())
+  statusWarga      String     @default("AKTIF") // AKTIF, PINDAH, MENINGGAL
+  tanggalMasuk     DateTime?  @default(now())
   user             User?
   duesBills        DuesBill[]
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([familyCardId])
   @@index([statusWarga])
@@ -180,4 +181,40 @@ model Announcement {
 
   @@index([status, publishDate])
   @@index([priority])
+}
+
+model ChatHistory {
+  id                     String                 @id @default(cuid())
+  user_id                String
+  role                   String
+  content                String
+  reasoning              String?
+  user                   User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at             DateTime               @default(now())
+  chatExecutionHistories ChatExecutionHistory[]
+}
+
+model ChatExecutionHistory {
+  id                        String                     @id @default(cuid())
+  chat_id                   String
+  method                    String
+  payload                   Json?
+  chat                      ChatHistory                @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  created_at                DateTime                   @default(now())
+  chatExecutionHistoryItems ChatExecutionHistoryItem[]
+}
+
+model ChatExecutionHistoryItem {
+  id String @id @default(cuid())
+
+  chatExecutionHistory   ChatExecutionHistory? @relation(fields: [chatExecutionHistoryId], references: [id])
+  chatExecutionHistoryId String?
+  family_card_id         String?
+  resident_id            String?
+  dues_type_id           String?
+  dues_period_id         String?
+  dues_bill_id           String?
+  payment_id             String?
+  cash_transaction_id    String?
+  announcement_id        String?
 }

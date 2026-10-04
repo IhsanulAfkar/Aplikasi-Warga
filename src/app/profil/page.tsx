@@ -110,7 +110,7 @@ export default async function AdminProfilPage() {
             <Button
               type="submit"
               variant="outline"
-              size="md"
+
               className="w-full text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-semibold flex items-center justify-center gap-2"
             >
               <LogOut className="w-4 h-4" />

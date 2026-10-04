@@ -161,10 +161,10 @@ export function NewResidentForm({
 
         <Button
           type="submit"
-          variant="primary"
+
           size="lg"
           className="w-full mt-4 font-semibold"
-          isLoading={isPending}
+          disabled={isPending}
         >
           Simpan Data Warga
         </Button>

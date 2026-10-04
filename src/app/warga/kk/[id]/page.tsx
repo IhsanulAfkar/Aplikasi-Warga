@@ -65,7 +65,7 @@ export default async function KKDetailPage({ params }: KKDetailPageProps) {
                 No. KK: {kk.nomorKK}
               </p>
             </div>
-            <Badge variant="info" size="md">
+            <Badge variant="info"  >
               {kk.members.length} Anggota
             </Badge>
           </div>
@@ -101,7 +101,7 @@ export default async function KKDetailPage({ params }: KKDetailPageProps) {
               >
                 <Button
                   type="submit"
-                  variant={kk.isActive ? "outline" : "primary"}
+                  variant={kk.isActive ? "outline" : "default"}
                   size="sm"
                   className="w-full text-xs"
                 >
@@ -134,9 +134,8 @@ export default async function KKDetailPage({ params }: KKDetailPageProps) {
               <Link
                 key={member.id}
                 href={isAdmin ? `/warga/resident/${member.id}` : "#"}
-                className={`block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm transition-all ${
-                  isAdmin ? "hover:border-blue-400 active:scale-[0.99]" : ""
-                }`}
+                className={`block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm transition-all ${isAdmin ? "hover:border-blue-400 active:scale-[0.99]" : ""
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -145,11 +144,10 @@ export default async function KKDetailPage({ params }: KKDetailPageProps) {
                         {member.nama}
                       </h4>
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                          member.jenisKelamin === "L"
-                            ? "bg-sky-100 text-sky-700"
-                            : "bg-pink-100 text-pink-700"
-                        }`}
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${member.jenisKelamin === "L"
+                          ? "bg-sky-100 text-sky-700"
+                          : "bg-pink-100 text-pink-700"
+                          }`}
                       >
                         {member.jenisKelamin}
                       </span>

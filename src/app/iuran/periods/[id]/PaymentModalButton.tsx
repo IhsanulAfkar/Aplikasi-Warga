@@ -35,7 +35,6 @@ export function PaymentModalButton({
     <>
       <Button
         type="button"
-        variant="primary"
         size="sm"
         className="text-xs h-7 px-2.5 font-semibold"
         onClick={() => setIsOpen(true)}
@@ -113,7 +112,7 @@ export function PaymentModalButton({
                 <Button
                   type="button"
                   variant="outline"
-                  size="md"
+
                   className="flex-1"
                   onClick={() => setIsOpen(false)}
                 >
@@ -121,10 +120,10 @@ export function PaymentModalButton({
                 </Button>
                 <Button
                   type="submit"
-                  variant="primary"
-                  size="md"
+
+
                   className="flex-1 font-semibold"
-                  isLoading={isPending}
+                  disabled={isPending}
                 >
                   Konfirmasi Lunas
                 </Button>

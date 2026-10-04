@@ -92,10 +92,10 @@ export function ChangePasswordForm() {
 
         <Button
           type="submit"
-          variant="primary"
+
           size="sm"
           className="w-full mt-2 font-semibold"
-          isLoading={isPending}
+          disabled={isPending}
         >
           Simpan Password Baru
         </Button>

@@ -92,10 +92,10 @@ export function CreateAccountCard({ residentId, residentName }: CreateAccountCar
 
         <Button
           type="submit"
-          variant="primary"
+
           size="sm"
           className="w-full mt-2 font-semibold"
-          isLoading={isPending}
+          disabled={isPending}
         >
           Buat Akun Sekarang
         </Button>
