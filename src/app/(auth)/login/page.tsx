@@ -94,7 +94,7 @@ export default function LoginPage() {
           {/* Quick Demo Credentials for Reviewers */}
           <div className="mt-6 space-y-2.5">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center">
-              ⚡ Akun Demo Siap Pakai:
+              Akun Demo:
             </p>
 
             <div className="grid grid-cols-2 gap-2">
