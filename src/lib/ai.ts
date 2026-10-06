@@ -22,14 +22,6 @@ export function mapChatHistory(chats: TChat[]): UIMessage[] {
       },
     ],
 
-    toolInvocations: chat.chatExecutionHistories?.map((exec) => ({
-      toolCallId: `tool-${exec.id}`,
-      toolName: exec.method,
-      state: "result" as const,
-      args: exec.payload,
-      result: {
-        // resident: exec.chatExecutionHistoryItems[0].resident
-      },
-    })),
+    toolInvocations: chat.chatExecutionHistories,
   }));
 }

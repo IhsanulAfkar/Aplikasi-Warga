@@ -367,7 +367,6 @@ export async function POST(req: Request) {
     let text = await callLLM(images);
     text = text.replace(/^\s*```json\s*/i, '')
       .replace(/\s*```\s*$/i, '')
-    console.log(text)
     let parsed: any;
 
     // 2️⃣ Try parse JSON
@@ -379,7 +378,6 @@ export async function POST(req: Request) {
 
     // 3️⃣ Validate with Zod
     let result = kkScanSchema.safeParse(parsed);
-    console.log(result.error?.flatten())
     // 4️⃣ If fail → fix locally
     if (!result.success) {
       parsed = fixLLMOutput(parsed);

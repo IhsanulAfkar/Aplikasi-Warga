@@ -8,6 +8,8 @@ import { withAuth } from '@/lib/api-auth';
 import { getSession } from '@/lib/auth';
 import { AffectedModel } from '@/types/chat';
 import { GENDER_OPTIONS } from '@/lib/constant';
+import { createGetAnnouncemensTools, createGetCashSummary, createGetCashTransaction, createGetCashTransactionsByCategory, createGetImportantAnnouncements, createGetIuran, createGetLatestAnnouncements, createGetResident, createSearchResident, getCurrentDate, ToolsResult } from '@/lib/chat/tools';
+import { Prisma } from '../../../../generated/prisma/client';
 
 const ollama = createOllama({
   // optional settings, e.g.
@@ -172,12 +174,7 @@ export async function POST(req: Request) {
       },
     });
     let aiChatId: string | null = null
-    const toolsResult: {
-      method: string, model_affected: {
-        model: AffectedModel,
-        id: string[]
-      }[], payload: any
-    } = {
+    const toolsResult: ToolsResult = {
       method: '',
       model_affected: [],
       payload: {}
@@ -206,404 +203,20 @@ Do not make up information. If the information is unavailable, say so clearly.
 `,
       messages: await convertToModelMessages(messages.slice(-20)),
       tools: {
-        getResident: tool({
-          description: `Gunakan tool ini untuk mengambil data:
-- warga
-- kartu keluarga atau kk
-- orang`,
-          inputSchema: z.object({}),
-          execute: async ({ }) => {
-            const kk = await prisma.familyCard.findMany({
-              include: {
-                members: true
-              }
-            })
-            toolsResult.method = "GET_FAMILY_CARD";
-            toolsResult.model_affected.push({
-              id: kk.map(t => t.id),
-              model: "family_card"
-            })
-            toolsResult.payload = {};
-
-            return kk;
-          },
-        }),
-        searchResident: tool({
-          description: `Mencari orang atau keluarga dari:
-- nama
-- gender`,
-          inputSchema: z.object({
-            name: z.string().optional(),
-            gender: z.enum(GENDER_OPTIONS).optional(),
-          }),
-          execute: async ({ name, gender }) => {
-            const residents = await prisma.resident.findMany({
-              where: {
-                ...(name && {
-                  OR: [
-                    { nama: { contains: name, mode: "insensitive" } },
-                  ],
-                }),
-                ...(gender && {
-                  jenisKelamin: gender
-                })
-              },
-            });
-            toolsResult.method = "SEARCH_RESIDENT";
-            toolsResult.model_affected.push({
-              id: residents.map(t => t.id),
-              model: "resident"
-            })
-            toolsResult.payload = { name, gender };
-
-            return residents;
-          },
-        }),
-        getIuran: tool({
-          description: "Mencari daftar iuran warga. seperti transaksi, daftar warga yang sudah bayar ataupun belum.",
-          inputSchema: z.object({}),
-          execute: async ({ }) => {
-
-            const duesTypes = await prisma.duesType.findMany({
-              include: {
-                periods: {
-                  include: {
-                    bills: {
-                      include: {
-                        familyCard: true,
-                        resident: true,
-                        payment: true
-                      }
-                    }
-                  }
-                }
-              }
-            })
-            toolsResult.method = "GET_DUES";
-            toolsResult.model_affected.push({
-              id: duesTypes.map(t => t.id),
-              model: "dues_type"
-            })
-            toolsResult.payload = {};
-
-            return duesTypes;
-          },
-        }),
-        getCashTransactions: tool({
-          description: `Gunakan tool ini untuk mengambil data transaksi kas warga.
-
-Gunakan tool ini ketika pengguna meminta:
-- daftar transaksi kas
-- transaksi pemasukan
-- transaksi pengeluaran
-- riwayat transaksi
-- transaksi berdasarkan kategori
-- transaksi berdasarkan tanggal
-- detail pemasukan atau pengeluaran
-
-Data transaksi memiliki:
-- type: INCOME atau EXPENSE
-- category: IURAN_WARGA, DONASI, OPERASIONAL, KEGIATAN, PEMELIHARAAN, atau LAINNYA
-- amount: nominal transaksi
-- description: keterangan transaksi
-- transactionDate: tanggal transaksi
-- isReversed: apakah transaksi sudah dibatalkan/direversal
-
-Jangan gunakan tool ini hanya untuk menghitung total jika pengguna hanya meminta jumlah pemasukan atau pengeluaran. Gunakan tool summary yang sesuai.`,
-          inputSchema: z.object({}),
-          execute: async () => {
-            const transactions = await prisma.cashTransaction.findMany({
-              where: {
-                isReversed: false,
-
-              },
-              orderBy: {
-                transactionDate: 'desc',
-              },
-            });
-
-            toolsResult.method = "GET_CASH_TRANSACTIONS";
-            toolsResult.model_affected.push({
-              id: transactions.map(t => t.id),
-              model: "cash_transaction",
-            });
-            toolsResult.payload = {};
-
-            return transactions;
-          },
-        }),
-
-        getCashSummary: tool({
-          description: `Gunakan tool ini untuk mendapatkan ringkasan keuangan kas warga.
-
-Gunakan tool ini ketika pengguna bertanya:
-- berapa total pemasukan
-- berapa total pengeluaran
-- berapa saldo kas
-- berapa pemasukan dan pengeluaran
-- bagaimana kondisi kas
-- ringkasan keuangan kas
-
-Tool ini memberikan total pemasukan, total pengeluaran, dan saldo kas.
-Transaksi yang sudah direversal tidak dihitung.`,
-          inputSchema: z.object({}),
-          execute: async () => {
-            const result = await prisma.cashTransaction.groupBy({
-              by: ['type'],
-              where: {
-                isReversed: false,
-              },
-              _sum: {
-                amount: true,
-              },
-            });
-
-            const income =
-              result.find(t => t.type === 'INCOME')?._sum.amount ?? 0;
-
-            const expense =
-              result.find(t => t.type === 'EXPENSE')?._sum.amount ?? 0;
-
-            const balance = income - expense;
-
-            toolsResult.method = "GET_CASH_SUMMARY";
-            toolsResult.model_affected.push({
-              id: [],
-              model: "cash_transaction",
-            });
-            toolsResult.payload = {};
-
-            return {
-              income,
-              expense,
-              balance,
-            };
-          },
-        }),
-
-        getCashTransactionsByCategory: tool({
-          description: `Gunakan tool ini untuk mendapatkan ringkasan transaksi kas berdasarkan kategori.
-
-Kategori yang tersedia:
-- IURAN_WARGA
-- DONASI
-- OPERASIONAL
-- KEGIATAN
-- PEMELIHARAAN
-- LAINNYA
-
-Gunakan ketika pengguna bertanya:
-- berapa pemasukan dari iuran warga
-- berapa pengeluaran untuk kegiatan
-- berapa uang yang digunakan untuk operasional
-- total donasi
-- total pemeliharaan
-- transaksi berdasarkan kategori`,
-          inputSchema: z.object({
-            category: z.enum([
-              'IURAN_WARGA',
-              'DONASI',
-              'OPERASIONAL',
-              'KEGIATAN',
-              'PEMELIHARAAN',
-              'LAINNYA',
-            ]),
-          }),
-          execute: async ({ category }) => {
-            const result = await prisma.cashTransaction.groupBy({
-              by: ['type'],
-              where: {
-                category,
-                isReversed: false,
-              },
-              _sum: {
-                amount: true,
-              },
-            });
-
-            const income =
-              result.find(t => t.type === 'INCOME')?._sum.amount ?? 0;
-
-            const expense =
-              result.find(t => t.type === 'EXPENSE')?._sum.amount ?? 0;
-
-            toolsResult.method = "GET_CASH_BY_CATEGORY";
-            toolsResult.model_affected.push({
-              id: [],
-              model: "cash_transaction",
-            });
-            toolsResult.payload = {
-              category,
-            };
-
-            return {
-              category,
-              income,
-              expense,
-              balance: income - expense,
-            };
-          },
-        }),
-        getAnnouncements: tool({
-          description: `Gunakan tool ini untuk mengambil daftar pengumuman warga.
-
-Gunakan ketika pengguna meminta:
-- daftar pengumuman
-- pengumuman warga
-- semua pengumuman
-- pengumuman yang sedang berlaku
-- informasi pengumuman
-- berita atau pemberitahuan dari pengurus
-
-Pengumuman memiliki:
-- title: judul pengumuman
-- content: isi pengumuman
-- priority: NORMAL atau IMPORTANT
-- status: DRAFT, PUBLISHED, atau ARCHIVED
-- publishDate: tanggal publikasi
-- expiryDate: tanggal berakhirnya pengumuman
-
-Untuk pengguna umum, prioritaskan pengumuman dengan status PUBLISHED
-dan yang masih berlaku.`,
-          inputSchema: z.object({}),
-          execute: async () => {
-            const announcements = await prisma.announcement.findMany({
-              where: {
-                status: 'PUBLISHED',
-                OR: [
-                  {
-                    expiryDate: null,
-                  },
-                  {
-                    expiryDate: {
-                      gte: new Date(),
-                    },
-                  },
-                ],
-                publishDate: {
-                  lte: new Date(),
-                },
-              },
-              orderBy: [
-                {
-                  priority: 'desc',
-                },
-                {
-                  publishDate: 'desc',
-                },
-              ],
-            });
-
-            toolsResult.method = "GET_ANNOUNCEMENTS";
-            toolsResult.model_affected.push({
-              id: announcements.map(t => t.id),
-              model: "announcement",
-            });
-            toolsResult.payload = {};
-
-            return announcements;
-          },
-        }),
-
-        getLatestAnnouncements: tool({
-          description: `Gunakan tool ini untuk mengambil pengumuman terbaru yang masih berlaku.
-
-Gunakan ketika pengguna bertanya:
-- "ada pengumuman terbaru?"
-- "apa pengumuman terbaru?"
-- "ada info terbaru?"
-- "apa kabar terbaru dari warga?"
-- "pengumuman hari ini apa?"
-- "ada pemberitahuan baru?"
-
-Hanya tampilkan pengumuman yang sudah dipublikasikan dan masih berlaku.`,
-          inputSchema: z.object({}),
-          execute: async () => {
-            const announcements = await prisma.announcement.findMany({
-              where: {
-                status: 'PUBLISHED',
-                publishDate: {
-                  lte: new Date(),
-                },
-                OR: [
-                  {
-                    expiryDate: null,
-                  },
-                  {
-                    expiryDate: {
-                      gte: new Date(),
-                    },
-                  },
-                ],
-              },
-              orderBy: {
-                publishDate: 'desc',
-              },
-              take: 5,
-            });
-
-            toolsResult.method = "GET_LATEST_ANNOUNCEMENTS";
-            toolsResult.model_affected.push({
-              id: announcements.map(t => t.id),
-              model: "announcement",
-            });
-            toolsResult.payload = {};
-
-            return announcements;
-          },
-        }),
-
-        getImportantAnnouncements: tool({
-          description: `Gunakan tool ini untuk mengambil pengumuman penting dari pengurus warga.
-
-Gunakan ketika pengguna bertanya:
-- "ada pengumuman penting?"
-- "apa informasi penting?"
-- "pengumuman penting apa?"
-- "apa yang harus saya ketahui?"
-- atau pengguna meminta informasi penting dari pengurus.
-
-Hanya gunakan pengumuman dengan priority IMPORTANT,
-status PUBLISHED, dan yang masih berlaku.`,
-          inputSchema: z.object({}),
-          execute: async () => {
-            const announcements = await prisma.announcement.findMany({
-              where: {
-                priority: 'IMPORTANT',
-                status: 'PUBLISHED',
-                publishDate: {
-                  lte: new Date(),
-                },
-                OR: [
-                  {
-                    expiryDate: null,
-                  },
-                  {
-                    expiryDate: {
-                      gte: new Date(),
-                    },
-                  },
-                ],
-              },
-              orderBy: {
-                publishDate: 'desc',
-              },
-            });
-
-            toolsResult.method = "GET_IMPORTANT_ANNOUNCEMENTS";
-            toolsResult.model_affected.push({
-              id: announcements.map(t => t.id),
-              model: "announcement",
-            });
-            toolsResult.payload = {};
-
-            return announcements;
-          },
-        }),
+        getCurrentDate,
+        getResident: createGetResident(toolsResult),
+        searchResident: createSearchResident(toolsResult),
+        getIuran: createGetIuran(toolsResult),
+        getCashTransactions: createGetCashTransaction(toolsResult),
+        getCashSummary: createGetCashSummary(toolsResult),
+        getCashTransactionsByCategory: createGetCashTransactionsByCategory(toolsResult),
+        getAnnouncements: createGetAnnouncemensTools(toolsResult),
+        getLatestAnnouncements: createGetLatestAnnouncements(toolsResult),
+        getImportantAnnouncements: createGetImportantAnnouncements(toolsResult),
       },
       stopWhen: stepCountIs(7),
       onFinish: async (props) => {
-        const { text, responseMessages, content: propsContent, output } = props
+        const { text, content: propsContent } = props
         const reasoning = propsContent
           .filter((message) => message.type === 'reasoning')
           .map((message) => message.text)
@@ -627,15 +240,34 @@ status PUBLISHED, dan yang masih berlaku.`,
               payload: toolsResult.payload,
             }
           })
-          const residentExec = toolsResult.model_affected.find(m => m.model === 'resident')
-          if (residentExec) {
-            residentExec.id.forEach(async (resId) => {
-              await prisma.chatExecutionHistoryItem.create({
-                data: {
-                  chatExecutionHistoryId: chatExec.id,
-                  resident_id: resId
-                }
-              })
+          const modelFieldMap = {
+            resident: 'resident_id',
+            announcement: 'announcement_id',
+            cash_transaction: 'cash_transaction_id',
+            dues_bill: 'dues_bill_id',
+            dues_period: 'dues_period_id',
+            dues_type: 'dues_type_id',
+            family_card: 'family_card_id',
+            payment: 'payment_id',
+          } as const
+
+          const historyItems = toolsResult.model_affected.flatMap((affected) => {
+            const field =
+              modelFieldMap[affected.model as keyof typeof modelFieldMap]
+
+            if (!field || !affected.id?.length) {
+              return []
+            }
+
+            return affected.id.map((id) => ({
+              chatExecutionHistoryId: chatExec.id,
+              [field]: id,
+            }))
+          })
+
+          if (historyItems.length > 0) {
+            await prisma.chatExecutionHistoryItem.createMany({
+              data: historyItems,
             })
           }
         }

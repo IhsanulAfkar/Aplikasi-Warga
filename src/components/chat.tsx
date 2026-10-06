@@ -26,6 +26,7 @@ import { MarkdownRenderer } from './pages/chat/MarkdownRender'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { toast } from 'sonner'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
+import SourceRender from './pages/chat/SourceRender'
 
 export function FloatingAIChat() {
   const [open, setOpen] = useState(false)
@@ -42,9 +43,9 @@ export function FloatingAIChat() {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     }),
-    // onFinish: () => {
-    //   refetch();
-    // },
+    onFinish: () => {
+      refetch();
+    },
     messages: mapChatHistory(messages),
 
   });
@@ -147,113 +148,73 @@ export function FloatingAIChat() {
                   .join("");
 
                 const isUser = m.role === "user";
+
                 const reasoning = m.parts
                   ?.filter((p: any) => p.type === "reasoning")
                   .map((p: any) => p.text)
                   .join("");
 
                 const isStreaming = status === "streaming";
+                const tools = m.toolInvocations ?? [];
+
                 return (
                   <div
                     key={m.id}
-                    className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                    className={cn(
+                      "flex",
+                      isUser ? "justify-end" : "justify-start"
+                    )}
                   >
                     <div
                       className={cn(
-                        "rounded-2xl px-4 py-2.5 text-sm shadow-sm max-w-[85%] leading-relaxed transition-all",
-                        isUser
-                          ? "bg-blue-600 text-white rounded-br-xs font-normal"
-                          : "bg-slate-100 text-slate-800 rounded-bl-xs dark:bg-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50"
+                        "flex max-w-[85%] flex-col",
+                        isUser ? "items-end" : "items-start"
                       )}
                     >
-                      {isUser ? (
-                        <p className="whitespace-pre-wrap">{text}</p>
-                      ) : (
-                        <div className="flex flex-col gap-2">
+                      {/* Message bubble */}
+                      <div
+                        className={cn(
+                          "rounded-2xl px-4 py-2.5 text-sm shadow-sm leading-relaxed transition-all",
+                          isUser
+                            ? "bg-blue-600 text-white rounded-br-xs font-normal"
+                            : "bg-slate-100 text-slate-800 rounded-bl-xs dark:bg-slate-800 dark:text-slate-100 border border-slate-200/50 dark:border-slate-700/50"
+                        )}
+                      >
+                        {isUser ? (
+                          <p className="whitespace-pre-wrap">{text}</p>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {/* Reasoning */}
+                            {reasoning && (
+                              <Collapsible defaultOpen className="rounded-lg">
+                                <CollapsibleTrigger className="flex w-full items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                  <span className="font-medium">
+                                    {isStreaming ? "Thinking..." : "Thought process"}
+                                  </span>
+                                </CollapsibleTrigger>
 
-                          {reasoning && (
-                            <Collapsible
-                              defaultOpen
-                              className="rounded-lg"
-                            >
-                              <CollapsibleTrigger className="flex w-full items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                <span className="font-medium">
-                                  {isStreaming ? "Thinking..." : "Thought process"}
-                                </span>
-                              </CollapsibleTrigger>
-
-                              <CollapsibleContent>
-                                <div className="mt-2 max-h-60 overflow-y-auto border-l-2 border-slate-300 pl-3 text-xs leading-relaxed text-slate-500 dark:border-slate-700 dark:text-slate-400 whitespace-pre-wrap">
-                                  {reasoning}
-                                </div>
-                              </CollapsibleContent>
-                            </Collapsible>
-                          )}
-
-                          {/* Final answer */}
-                          {text && <MarkdownRenderer content={text} />}
-
-                          {m.toolInvocations?.map((tool: any) => (
-                            <Popover key={tool.toolCallId}>
-                              <PopoverTrigger>
-                                <div className="mt-2 text-xs flex items-center gap-2 px-2.5 py-1.5 bg-white/80 dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-all shadow-xs">
-                                  {tool.state === "call" && (
-                                    <>
-                                      <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-                                      <span>Executing {tool.toolName}...</span>
-                                    </>
-                                  )}
-
-                                  {tool.state === "result" && (
-                                    <>
-                                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                                      <span>Finished {tool.toolName}</span>
-                                    </>
-                                  )}
-                                </div>
-                              </PopoverTrigger>
-
-                              <PopoverContent
-                                side="top"
-                                align="start"
-                                className="w-[300px] text-xs p-3 rounded-xl border-slate-200 dark:border-slate-800 shadow-xl"
-                              >
-                                <div className="space-y-2.5">
-                                  <div className="font-semibold text-blue-600 dark:text-blue-400">
-                                    {tool.toolName}
+                                <CollapsibleContent>
+                                  <div className="mt-2 max-h-60 overflow-y-auto border-l-2 border-slate-300 pl-3 text-xs leading-relaxed text-slate-500 dark:border-slate-700 dark:text-slate-400 whitespace-pre-wrap">
+                                    {reasoning}
                                   </div>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            )}
 
-                                  {tool.args && (
-                                    <div>
-                                      <div className="text-slate-400 mb-1 font-medium text-[11px]">
-                                        Arguments
-                                      </div>
-                                      <pre className="bg-slate-100 dark:bg-slate-800/80 rounded-lg p-2 overflow-x-auto text-[11px] font-mono text-slate-700 dark:text-slate-300">
-                                        {JSON.stringify(tool.args, null, 2)}
-                                      </pre>
-                                    </div>
-                                  )}
+                            {/* Final answer */}
+                            {text && <MarkdownRenderer content={text} />}
+                          </div>
+                        )}
+                      </div>
 
-                                  {Array.isArray(tool.result?.residents) && (
-                                    <div className="space-y-1">
-                                      <p className="font-medium text-slate-500 dark:text-slate-400 text-[11px]">
-                                        Residents
-                                      </p>
-                                      {tool.result.residents.map(
-                                        (t: any, i: number) => (
-                                          <div
-                                            key={i}
-                                            className="font-medium text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-md border border-slate-100 dark:border-slate-700/50"
-                                          >
-                                            {t.title}
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
+                      {/* Tool executions - outside message bubble */}
+                      {!isUser && tools.length > 0 && (
+                        <div className="mt-1.5 w-full space-y-0.5 px-1">
+                          {tools.map((tool: any, idx: number) => (
+                            <SourceRender
+                              key={tool.id ?? idx}
+                              executionHistories={tool}
+                            />
                           ))}
                         </div>
                       )}
@@ -263,7 +224,7 @@ export function FloatingAIChat() {
               })}
 
               {/* Streaming / thinking indicator */}
-              {(status === "submitted") && (
+              {status === "submitted" && (
                 <div className="flex justify-start">
                   <div className="rounded-2xl rounded-bl-xs px-3.5 py-2 text-xs bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-2">
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
