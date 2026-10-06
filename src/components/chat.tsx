@@ -80,7 +80,7 @@ export function FloatingAIChat() {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'absolute pointer-events-auto bottom-32 right-6 z-50',
+          'absolute pointer-events-auto bottom-20 right-6 z-50',
           'flex size-14 items-center justify-center',
           'rounded-full bg-white text-primary-foreground',
           'shadow-lg shadow-black/20',

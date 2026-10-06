@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FloatingAIChat } from "../chat";
 
 interface BottomNavProps {
   role: "ADMIN" | "WARGA";
@@ -81,8 +82,9 @@ export function BottomNav({ role }: BottomNavProps) {
 
   const items = role === "ADMIN" ? adminNavItems : wargaNavItems;
 
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg px-2 py-1.5 pb-safe">
+  return (<>
+    <FloatingAIChat />
+    <nav className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg px-2 py-1.5 pb-safe">
       <div className="flex items-center justify-around">
         {items.map((item) => {
           const Icon = item.icon;
@@ -117,6 +119,6 @@ export function BottomNav({ role }: BottomNavProps) {
           );
         })}
       </div>
-    </nav>
+    </nav></>
   );
 }

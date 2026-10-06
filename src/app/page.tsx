@@ -303,7 +303,6 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <FloatingAIChat />
       <BottomNav role="ADMIN" />
     </MobileFrame>
   );
