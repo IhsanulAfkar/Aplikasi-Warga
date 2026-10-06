@@ -144,7 +144,7 @@ export default async function KKDetailPage({ params }: KKDetailPageProps) {
                         {member.nama}
                       </h4>
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${member.jenisKelamin === "L"
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${member.jenisKelamin === "LAKI-LAKI"
                           ? "bg-sky-100 text-sky-700"
                           : "bg-pink-100 text-pink-700"
                           }`}

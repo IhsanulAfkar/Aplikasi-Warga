@@ -57,9 +57,6 @@ export default async function KasManagementPage({ searchParams }: KasPageProps) 
               <Wallet className="w-4 h-4 text-blue-200" />
               Saldo Kas RT 001
             </span>
-            <span className="text-[10px] bg-white/20 text-white font-semibold px-2 py-0.5 rounded-full">
-              Real-time
-            </span>
           </div>
 
           <div className="text-3xl font-extrabold tracking-tight">
@@ -87,31 +84,28 @@ export default async function KasManagementPage({ searchParams }: KasPageProps) 
           <div className="flex bg-slate-200/80 p-1 rounded-2xl flex-1">
             <Link
               href="/kas"
-              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${
-                filterType === "ALL"
+              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${filterType === "ALL"
                   ? "bg-white text-blue-700 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               Semua
             </Link>
             <Link
               href="/kas?type=INCOME"
-              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${
-                filterType === "INCOME"
+              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${filterType === "INCOME"
                   ? "bg-white text-emerald-600 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               Masuk
             </Link>
             <Link
               href="/kas?type=EXPENSE"
-              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${
-                filterType === "EXPENSE"
+              className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-xl transition-all ${filterType === "EXPENSE"
                   ? "bg-white text-rose-600 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               Keluar
             </Link>
@@ -141,20 +135,18 @@ export default async function KasManagementPage({ searchParams }: KasPageProps) 
               return (
                 <div
                   key={tx.id}
-                  className={`p-3.5 bg-white border rounded-2xl shadow-sm space-y-2 ${
-                    tx.isReversed
+                  className={`p-3.5 bg-white border rounded-2xl shadow-sm space-y-2 ${tx.isReversed
                       ? "border-slate-200 bg-slate-50/70 opacity-60"
                       : "border-slate-200 hover:border-slate-300"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                          isIncome
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isIncome
                             ? "bg-emerald-50 text-emerald-600"
                             : "bg-rose-50 text-rose-600"
-                        }`}
+                          }`}
                       >
                         {isIncome ? (
                           <ArrowDownRight className="w-5 h-5" />
@@ -181,13 +173,12 @@ export default async function KasManagementPage({ searchParams }: KasPageProps) 
 
                     <div className="text-right">
                       <span
-                        className={`text-xs font-bold ${
-                          tx.isReversed
+                        className={`text-xs font-bold ${tx.isReversed
                             ? "text-slate-400 line-through"
                             : isIncome
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                        }`}
+                              ? "text-emerald-600"
+                              : "text-rose-600"
+                          }`}
                       >
                         {isIncome ? "+" : "-"} {formatRupiah(tx.amount)}
                       </span>

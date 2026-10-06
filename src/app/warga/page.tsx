@@ -54,11 +54,10 @@ export default async function WargaManagementPage({ searchParams }: WargaPagePro
         <div className="flex bg-slate-200/80 p-1 rounded-2xl">
           <Link
             href="/warga?tab=kk"
-            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === "kk"
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${activeTab === "kk"
                 ? "bg-white text-blue-700 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+              }`}
           >
             <Home className="w-3.5 h-3.5" />
             <span>Kartu Keluarga (KK)</span>
@@ -66,11 +65,10 @@ export default async function WargaManagementPage({ searchParams }: WargaPagePro
 
           <Link
             href="/warga?tab=resident"
-            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === "resident"
+            className={`flex-1 py-2 text-center text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${activeTab === "resident"
                 ? "bg-white text-blue-700 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+              }`}
           >
             <User className="w-3.5 h-3.5" />
             <span>Data Warga (NIK)</span>
@@ -180,11 +178,10 @@ export default async function WargaManagementPage({ searchParams }: WargaPagePro
                             {r.nama}
                           </h3>
                           <span
-                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                              r.jenisKelamin === "L"
+                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${r.jenisKelamin === "LAKI-LAKI"
                                 ? "bg-sky-100 text-sky-700"
                                 : "bg-pink-100 text-pink-700"
-                            }`}
+                              }`}
                           >
                             {r.jenisKelamin}
                           </span>
@@ -199,8 +196,8 @@ export default async function WargaManagementPage({ searchParams }: WargaPagePro
                           r.statusWarga === "AKTIF"
                             ? "success"
                             : r.statusWarga === "PINDAH"
-                            ? "warning"
-                            : "danger"
+                              ? "warning"
+                              : "danger"
                         }
                         size="sm"
                       >

@@ -80,9 +80,6 @@ export default async function AdminDashboardPage() {
                 <Wallet className="w-4 h-4 text-blue-200" />
                 Saldo Kas RT Saat Ini
               </span>
-              <span className="text-[10px] bg-white/20 text-white font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
-                Real-time
-              </span>
             </div>
 
             <div className="text-3xl font-extrabold tracking-tight">

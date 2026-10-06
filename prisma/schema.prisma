@@ -54,7 +54,7 @@ model Resident {
   familyCardId     String
   familyCard       FamilyCard @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
   hubunganKeluarga String     @default("KEPALA_KELUARGA") // KEPALA_KELUARGA, ISTRI, ANAK, ORANG_TUA, FAMILI_LAIN
-  jenisKelamin     String     @default("L") // L, P
+  jenisKelamin     String     @default("LAKI-LAKI") // L, P
   tempatLahir      String
   tanggalLahir     DateTime
   agama            String?    @default("ISLAM")

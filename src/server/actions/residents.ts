@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireAuth } from "@/lib/permissions";
+import { GENDER_OPTIONS } from "@/lib/constant";
 
 const residentSchema = z.object({
   nik: z
@@ -14,7 +15,7 @@ const residentSchema = z.object({
   nama: z.string().min(2, "Nama lengkap wajib diisi"),
   familyCardId: z.string().min(1, "Kartu Keluarga wajib dipilih"),
   hubunganKeluarga: z.string().default("KEPALA_KELUARGA"),
-  jenisKelamin: z.enum(["L", "P"], { required_error: "Jenis kelamin wajib dipilih" }),
+  jenisKelamin: z.enum(GENDER_OPTIONS, { required_error: "Jenis kelamin wajib dipilih" }),
   tempatLahir: z.string().min(2, "Tempat lahir wajib diisi"),
   tanggalLahir: z.string().min(1, "Tanggal lahir wajib diisi"),
   agama: z.string().default("ISLAM"),
@@ -108,7 +109,7 @@ export async function createResident(prevState: any, formData: FormData) {
     nama: formData.get("nama") as string,
     familyCardId: formData.get("familyCardId") as string,
     hubunganKeluarga: (formData.get("hubunganKeluarga") as string) || "KEPALA_KELUARGA",
-    jenisKelamin: (formData.get("jenisKelamin") as any) || "L",
+    jenisKelamin: (formData.get("jenisKelamin") as any) || "LAKI-LAKI",
     tempatLahir: formData.get("tempatLahir") as string,
     tanggalLahir: formData.get("tanggalLahir") as string,
     agama: (formData.get("agama") as string) || "ISLAM",
@@ -156,7 +157,7 @@ export async function updateResident(id: string, prevState: any, formData: FormD
     nama: formData.get("nama") as string,
     familyCardId: formData.get("familyCardId") as string,
     hubunganKeluarga: (formData.get("hubunganKeluarga") as string) || "KEPALA_KELUARGA",
-    jenisKelamin: (formData.get("jenisKelamin") as any) || "L",
+    jenisKelamin: (formData.get("jenisKelamin") as any) || "LAKI-LAKI",
     tempatLahir: formData.get("tempatLahir") as string,
     tanggalLahir: formData.get("tanggalLahir") as string,
     agama: (formData.get("agama") as string) || "ISLAM",

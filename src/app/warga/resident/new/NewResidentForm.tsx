@@ -12,7 +12,30 @@ interface NewResidentFormProps {
   familyCards: { id: string; nomorKK: string; kepalaKeluarga: string }[];
   defaultFamilyCardId?: string;
 }
-
+export const hubunganKeluargaOptions = [
+  { value: "KEPALA_KELUARGA", label: "Kepala Keluarga" },
+  { value: "ISTRI", label: "Istri" },
+  { value: "ANAK", label: "Anak" },
+  { value: "ORANG_TUA", label: "Orang Tua" },
+  { value: "FAMILI_LAIN", label: "Famili Lain" },
+]
+export const jenisKelaminOptions = [
+  { value: "LAKI-LAKI", label: "Laki-Laki (L)" },
+  { value: "PEREMPUAN", label: "Perempuan (P)" },]
+export const agamaOptions = [
+  { value: "ISLAM", label: "Islam" },
+  { value: "KRISTEN", label: "Kristen" },
+  { value: "KATOLIK", label: "Katolik" },
+  { value: "HINDU", label: "Hindu" },
+  { value: "BUDDHA", label: "Buddha" },
+  { value: "KONGHUCU", label: "Konghucu" },
+]
+export const statusPerkawinanOptions = [
+  { value: "BELUM_KAWIN", label: "Belum Kawin" },
+  { value: "KAWIN", label: "Kawin" },
+  { value: "CERAI_HIDUP", label: "Cerai Hidup" },
+  { value: "CERAI_MATI", label: "Cerai Mati" }
+]
 export function NewResidentForm({
   familyCards,
   defaultFamilyCardId,
@@ -70,23 +93,14 @@ export function NewResidentForm({
             label="Hubungan Keluarga"
             name="hubunganKeluarga"
             defaultValue="KEPALA_KELUARGA"
-            options={[
-              { value: "KEPALA_KELUARGA", label: "Kepala Keluarga" },
-              { value: "ISTRI", label: "Istri" },
-              { value: "ANAK", label: "Anak" },
-              { value: "ORANG_TUA", label: "Orang Tua" },
-              { value: "FAMILI_LAIN", label: "Famili Lain" },
-            ]}
+            options={hubunganKeluargaOptions}
           />
 
           <Select
             label="Jenis Kelamin"
             name="jenisKelamin"
-            defaultValue="L"
-            options={[
-              { value: "L", label: "Laki-Laki (L)" },
-              { value: "P", label: "Perempuan (P)" },
-            ]}
+            defaultValue="LAKI-LAKI"
+            options={jenisKelaminOptions}
           />
         </div>
 
@@ -111,26 +125,14 @@ export function NewResidentForm({
             label="Agama"
             name="agama"
             defaultValue="ISLAM"
-            options={[
-              { value: "ISLAM", label: "Islam" },
-              { value: "KRISTEN", label: "Kristen" },
-              { value: "KATOLIK", label: "Katolik" },
-              { value: "HINDU", label: "Hindu" },
-              { value: "BUDDHA", label: "Buddha" },
-              { value: "KONGHUCU", label: "Konghucu" },
-            ]}
+            options={agamaOptions}
           />
 
           <Select
             label="Status Perkawinan"
             name="statusPerkawinan"
             defaultValue="BELUM_KAWIN"
-            options={[
-              { value: "BELUM_KAWIN", label: "Belum Kawin" },
-              { value: "KAWIN", label: "Kawin" },
-              { value: "CERAI_HIDUP", label: "Cerai Hidup" },
-              { value: "CERAI_MATI", label: "Cerai Mati" },
-            ]}
+            options={statusPerkawinanOptions}
           />
         </div>
 
@@ -161,7 +163,6 @@ export function NewResidentForm({
 
         <Button
           type="submit"
-
           size="lg"
           className="w-full mt-4 font-semibold"
           disabled={isPending}

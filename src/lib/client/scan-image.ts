@@ -4,21 +4,22 @@ import { GENDER_OPTIONS, STATUS_PERKAWINAN } from "../constant"
 export type ScanAnggota = {
   "nama_lengkap": string | null,
   "nik": string | null,
-  "jenis_kelamin": typeof GENDER_OPTIONS,
+  "jenis_kelamin": typeof GENDER_OPTIONS[number],
   "tempat_lahir": string | null,
   "tanggal_lahir": string | null,
   "agama": string | null,
   "pendidikan": string | null,
   "jenis_pekerjaan": string | null,
   "golongan_darah": string | null,
-  "status_perkawinan": typeof STATUS_PERKAWINAN,
+  "status_perkawinan": typeof STATUS_PERKAWINAN[number],
   "tanggal_perkawinan": string | null,
   "status_hubungan_dalam_keluarga": string | null,
   "kewarganegaraan": string | null,
   "paspor": string | null,
   "kitap": string | null,
   "ayah": string | null,
-  "ibu": string | null
+  "ibu": string | null,
+  "no_telpon"?: string | null,
 }
 export type ScanResponse = {
   "no": string,

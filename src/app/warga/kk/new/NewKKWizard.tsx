@@ -22,9 +22,32 @@ import {
   ScanLine,
   Image as ImageIcon,
   Zap,
+  Plus,
+  Trash2,
 } from "lucide-react";
-import { scanImage, ScanResponse } from "@/lib/client/scan-image";
-
+import { ScanAnggota, scanImage, ScanResponse } from "@/lib/client/scan-image";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { agamaOptions, hubunganKeluargaOptions, jenisKelaminOptions, statusPerkawinanOptions } from "../../resident/new/NewResidentForm";
+const defaultScanAnggota: ScanAnggota = {
+  nik: "",
+  tempat_lahir: "",
+  agama: "",
+  ayah: "",
+  ibu: "",
+  jenis_kelamin: "LAKI-LAKI",
+  jenis_pekerjaan: "",
+  kewarganegaraan: "",
+  kitap: null,
+  nama_lengkap: "",
+  paspor: "",
+  pendidikan: "",
+  status_hubungan_dalam_keluarga: "",
+  status_perkawinan: "BELUM KAWIN",
+  tanggal_lahir: "",
+  tanggal_perkawinan: "",
+  golongan_darah: "",
+  no_telpon: null
+}
 export function NewKKWizard() {
   const router = useRouter();
 
@@ -49,6 +72,7 @@ export function NewKKWizard() {
     rt: '',
     rw: ''
   }
+
   // Form State
   const [formData, setFormData] = useState<ScanResponse>(defaultFormData);
 
@@ -58,8 +82,10 @@ export function NewKKWizard() {
   // Form submission action
   const [state, formAction, isPending] = useActionState(
     async (prev: any, fData: FormData) => {
-      const res = await createFamilyCard(prev, fData);
+
+      const res = await createFamilyCard(formData);
       if (res?.success && res.id) {
+        setFormData(defaultFormData)
         router.push(`/warga/kk/${res.id}`);
       }
       return res;
@@ -103,7 +129,35 @@ export function NewKKWizard() {
       processImage(file);
     }
   };
-
+  const addResident = () => {
+    setFormData(prev => ({
+      ...prev,
+      anggota: [...prev.anggota, defaultScanAnggota]
+    }))
+  }
+  const updateAnggota = (
+    index: number,
+    field: keyof ScanAnggota,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      anggota: prev.anggota.map((item, idx) =>
+        idx === index
+          ? {
+            ...item,
+            [field]: value,
+          }
+          : item
+      ),
+    }));
+  };
+  const deleteAnggota = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      anggota: prev.anggota.filter((_, idx) => idx !== index),
+    }));
+  };
   return (
     <div className="space-y-4">
       {/* Step Indicator */}
@@ -303,51 +357,51 @@ export function NewKKWizard() {
       )}
 
       {/* ================= STEP 2: REVIEW & SUBMIT FORM ================= */}
-      {step === 2 && (
-        <Card className="p-4 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div className="flex items-center gap-1.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="p-1 h-7 text-slate-500"
-                onClick={() => setStep(1)}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h3 className="text-sm font-bold text-slate-900">
-                Formulir Kartu Keluarga
-              </h3>
+      {step === 2 && (<>
+
+        <form action={formAction} className="space-y-4">
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-7 text-slate-500"
+                  onClick={() => setStep(1)}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Formulir Kartu Keluarga
+                </h3>
+              </div>
+
+              {extractedData && (
+                <Badge variant="info" size="sm" className="gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  OCR Aktif
+                </Badge>
+              )}
             </div>
 
             {extractedData && (
-              <Badge variant="info" size="sm" className="gap-1">
-                <Sparkles className="w-3 h-3" />
-                OCR Aktif
-              </Badge>
-            )}
-          </div>
-
-          {extractedData && (
-            <div className="p-3 bg-blue-50/80 border border-blue-200 text-blue-900 text-xs rounded-xl flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Form Terisi Otomatis!</p>
-                <p className="text-[11px] text-blue-700 mt-0.5">
-                  Kolom di bawah telah diisi dari hasil pemindaian OCR dokumen KK Anda. Silakan verifikasi dan lengkapi bila diperlukan.
-                </p>
+              <div className="p-3 bg-blue-50/80 border border-blue-200 text-blue-900 text-xs rounded-xl flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Form Terisi Otomatis!</p>
+                  <p className="text-[11px] text-blue-700 mt-0.5">
+                    Kolom di bawah telah diisi dari hasil pemindaian OCR dokumen KK Anda. Silakan verifikasi dan lengkapi bila diperlukan.
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <form action={formAction} className="space-y-3.5">
             {state?.error && (
               <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
                 {state.error}
               </div>
             )}
-
             <div>
               <Input
                 label="Nomor Kartu Keluarga (16 Digit)"
@@ -363,7 +417,6 @@ export function NewKKWizard() {
                 helperText="Nomor KK harus tepat 16 digit angka"
               />
             </div>
-
             <div>
               <Input
                 label="Nama Kepala Keluarga"
@@ -377,7 +430,6 @@ export function NewKKWizard() {
                 required
               />
             </div>
-
             <div>
               <Input
                 label="Alamat Rumah / Jalan"
@@ -391,7 +443,6 @@ export function NewKKWizard() {
                 required
               />
             </div>
-
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="RT"
@@ -432,7 +483,6 @@ export function NewKKWizard() {
                 required
               />
             </div>
-
             <Input
               label="Kode Pos"
               name="kodePos"
@@ -444,31 +494,153 @@ export function NewKKWizard() {
               placeholder="Contoh: 16415"
               maxLength={5}
             />
+          </Card>
+          {formData.anggota.length > 0 && <>
+            <Accordion defaultValue={["resident"]} className="max-w-max!">
+              <AccordionItem value={"resident"}>
+                <AccordionTrigger>Anggota Keluarga ({formData.anggota.length})</AccordionTrigger>
+                <AccordionContent className={'space-y-4'}>
+                  {formData.anggota.map((anggota, idx) => <Card className="p-4 space-y-4" key={idx}>
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-bold text-slate-900">
+                          Anggota {idx + 1}
+                        </h3>
+                      </div>
+                      <div className="flex items-center justify-end gap-3">
+                        {extractedData && (
+                          <Badge variant="info" size="sm" className="gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            OCR Aktif
+                          </Badge>
+                        )}
+                        <Button variant={"destructive"} onClick={() => deleteAnggota(idx)}>
+                          <Trash2 className="text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Input
+                      label="Nomor Induk Kependudukan (NIK - 16 Digit)"
+                      name={`nik_${idx}`}
+                      type="text"
+                      value={anggota.nik ?? ""}
+                      onChange={(e) =>
+                        updateAnggota(idx, "nik", e.target.value)
+                      }
+                      placeholder="Contoh: 3276011203050001"
+                      maxLength={16}
+                      required
+                      helperText="Nomor KK harus tepat 16 digit angka"
+                    />
+                    <Input
+                      label="Nama Lengkap Sesuai KTP"
+                      name={`nama_${idx}`}
+                      type="text"
+                      value={anggota.nama_lengkap ?? ""}
+                      onChange={(e) =>
+                        updateAnggota(idx, "nama_lengkap", e.target.value)
+                      }
+                      required
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select
+                        label="Hubungan Keluarga"
+                        name={`nama_keluarga_${idx}`}
+                        value={anggota.status_hubungan_dalam_keluarga ?? ""}
+                        onChange={e => updateAnggota(idx, "status_hubungan_dalam_keluarga", e.target.value)}
+                        options={hubunganKeluargaOptions}
+                      />
 
-            <div className="flex gap-2.5 pt-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="flex-1"
-                onClick={() => setStep(1)}
-              >
-                Scan Ulang
-              </Button>
+                      <Select
+                        label="Jenis Kelamin"
+                        name={`jenis_kelamin_${idx}`}
+                        value={anggota.jenis_kelamin}
+                        onChange={e => updateAnggota(idx, "jenis_kelamin", e.target.value)}
+                        options={jenisKelaminOptions}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        label="Tempat Lahir"
+                        name={`tempat_lahir_${idx}`}
+                        placeholder="Kota lahir"
+                        value={anggota.tempat_lahir ?? ""}
+                        onChange={(e) => updateAnggota(idx, "tempat_lahir", e.target.value)}
+                        required
+                      />
+                      <Input
+                        label="Tanggal Lahir"
+                        name={`tanggal_lahir_${idx}`}
+                        type="date"
+                        value={anggota.tanggal_lahir?.split("T")[0] ?? ""}
+                        onChange={(e) => updateAnggota(idx, "tanggal_lahir", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select
+                        label="Agama"
+                        name={`agama_${idx}`}
+                        value={anggota.agama ?? ""}
+                        onChange={(e) => updateAnggota(idx, "agama", e.target.value)}
+                        options={agamaOptions}
+                      />
 
-              <Button
-                type="submit"
+                      <Select
+                        label="Status Perkawinan"
+                        name={`status_perkawinan_${idx}`}
+                        value={anggota.status_perkawinan ?? ""}
+                        onChange={(e) => updateAnggota(idx, "status_perkawinan", e.target.value)}
+                        options={statusPerkawinanOptions}
+                      />
+                    </div>
+                    <Input
+                      label="Pekerjaan"
+                      name={`pekerjaan_${idx}`}
+                      type="text"
+                      value={anggota.jenis_pekerjaan ?? ""}
+                      onChange={(e) => updateAnggota(idx, "jenis_pekerjaan", e.target.value)}
+                      placeholder="Contoh: Karyawan Swasta, Guru, Wiraswasta"
+                    />
+                    <Input
+                      label="Nomor WhatsApp / Telepon"
+                      name={`telepon_${idx}`}
+                      type="tel"
+                      placeholder="Contoh: 081234567890"
+                      value={anggota.no_telpon ?? ""}
+                      onChange={(e) => updateAnggota(idx, "no_telpon", e.target.value)}
+                    />
+                  </Card>)}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>}
+          <Button onClick={addResident} className={'border-dashed border-blue-500 text-blue-500 border w-full'}><Plus /> Tambah Anggota</Button>
+          <div className="flex gap-2.5 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="flex-1"
+              onClick={() => setStep(1)}
+            >
+              Scan Ulang
+            </Button>
 
-                size="lg"
-                className="flex-[2] font-semibold shadow-md shadow-blue-500/20"
-                disabled={isPending}
-              >
-                Simpan Kartu Keluarga
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-    </div>
+            <Button
+              type="submit"
+
+              size="lg"
+              className="flex-[2] font-semibold shadow-md shadow-blue-500/20"
+              disabled={isPending}
+            >
+              Simpan Kartu Keluarga
+            </Button>
+          </div>
+        </form>
+      </>
+      )
+      }
+    </div >
   );
 }

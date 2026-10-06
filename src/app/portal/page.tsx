@@ -101,7 +101,7 @@ export default async function WargaPortalPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="w-full bg-white text-amber-900 hover:bg-amber-50 border-0 font-semibold flex items-center justify-center gap-1.5"
+                className="w-full bg-white text-amber-900 hover:bg-amber-50 border-0 font-semibold flex items-center justify-center gap-1.5 rounded-md"
               >
                 <span>Lihat Rincian Tagihan Saya</span>
                 <ChevronRight className="w-4 h-4" />

@@ -53,12 +53,12 @@ export default async function ResidentDetailPage({ params }: ResidentDetailPageP
                   {resident.nama}
                 </h2>
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${resident.jenisKelamin === "L"
-                      ? "bg-sky-100 text-sky-700"
-                      : "bg-pink-100 text-pink-700"
+                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${resident.jenisKelamin === "LAKI-LAKI"
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-pink-100 text-pink-700"
                     }`}
                 >
-                  {resident.jenisKelamin === "L" ? "Laki-Laki" : "Perempuan"}
+                  {resident.jenisKelamin === "LAKI-LAKI" ? "Laki-Laki" : "Perempuan"}
                 </span>
               </div>
               <p className="text-xs font-mono text-slate-500 mt-0.5">

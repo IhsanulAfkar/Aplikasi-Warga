@@ -231,10 +231,10 @@ Do not make up information. If the information is unavailable, say so clearly.
         searchResident: tool({
           description: `Mencari orang atau keluarga dari:
 - nama
-- gender. Laki-laki menjadi L, perempuan menjadi P.`,
+- gender`,
           inputSchema: z.object({
             name: z.string().optional(),
-            gender: z.enum(["L", "P"]).optional(),
+            gender: z.enum(GENDER_OPTIONS).optional(),
           }),
           execute: async ({ name, gender }) => {
             const residents = await prisma.resident.findMany({
