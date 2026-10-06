@@ -174,11 +174,7 @@ export async function POST(req: Request) {
       },
     });
     let aiChatId: string | null = null
-    const toolsResult: ToolsResult = {
-      method: '',
-      model_affected: [],
-      payload: {}
-    }
+    const toolsResults: ToolsResult[] = []
     const result = await streamText({
       model: ollama(process.env.OLLAMA_MODEL!),
       providerOptions: {
@@ -204,15 +200,15 @@ Do not make up information. If the information is unavailable, say so clearly.
       messages: await convertToModelMessages(messages.slice(-20)),
       tools: {
         getCurrentDate,
-        getResident: createGetResident(toolsResult),
-        searchResident: createSearchResident(toolsResult),
-        getIuran: createGetIuran(toolsResult),
-        getCashTransactions: createGetCashTransaction(toolsResult),
-        getCashSummary: createGetCashSummary(toolsResult),
-        getCashTransactionsByCategory: createGetCashTransactionsByCategory(toolsResult),
-        getAnnouncements: createGetAnnouncemensTools(toolsResult),
-        getLatestAnnouncements: createGetLatestAnnouncements(toolsResult),
-        getImportantAnnouncements: createGetImportantAnnouncements(toolsResult),
+        getResident: createGetResident(toolsResults),
+        searchResident: createSearchResident(toolsResults),
+        getIuran: createGetIuran(toolsResults),
+        getCashTransactions: createGetCashTransaction(toolsResults),
+        getCashSummary: createGetCashSummary(toolsResults),
+        getCashTransactionsByCategory: createGetCashTransactionsByCategory(toolsResults),
+        getAnnouncements: createGetAnnouncemensTools(toolsResults),
+        getLatestAnnouncements: createGetLatestAnnouncements(toolsResults),
+        getImportantAnnouncements: createGetImportantAnnouncements(toolsResults),
       },
       stopWhen: stepCountIs(7),
       onFinish: async (props) => {
@@ -231,44 +227,46 @@ Do not make up information. If the information is unavailable, say so clearly.
           },
         });
         aiChatId = chat.id
-        if (aiChatId && toolsResult.method) {
-          // save instruction
-          const chatExec = await prisma.chatExecutionHistory.create({
-            data: {
-              chat_id: aiChatId,
-              method: toolsResult.method,
-              payload: toolsResult.payload,
-            }
-          })
-          const modelFieldMap = {
-            resident: 'resident_id',
-            announcement: 'announcement_id',
-            cash_transaction: 'cash_transaction_id',
-            dues_bill: 'dues_bill_id',
-            dues_period: 'dues_period_id',
-            dues_type: 'dues_type_id',
-            family_card: 'family_card_id',
-            payment: 'payment_id',
-          } as const
-
-          const historyItems = toolsResult.model_affected.flatMap((affected) => {
-            const field =
-              modelFieldMap[affected.model as keyof typeof modelFieldMap]
-
-            if (!field || !affected.id?.length) {
-              return []
-            }
-
-            return affected.id.map((id) => ({
-              chatExecutionHistoryId: chatExec.id,
-              [field]: id,
-            }))
-          })
-
-          if (historyItems.length > 0) {
-            await prisma.chatExecutionHistoryItem.createMany({
-              data: historyItems,
+        if (aiChatId) {
+          for (const toolsResult of toolsResults) {
+            // save instruction
+            const chatExec = await prisma.chatExecutionHistory.create({
+              data: {
+                chat_id: aiChatId,
+                method: toolsResult.method,
+                payload: toolsResult.payload,
+              }
             })
+            const modelFieldMap = {
+              resident: 'resident_id',
+              announcement: 'announcement_id',
+              cash_transaction: 'cash_transaction_id',
+              dues_bill: 'dues_bill_id',
+              dues_period: 'dues_period_id',
+              dues_type: 'dues_type_id',
+              family_card: 'family_card_id',
+              payment: 'payment_id',
+            } as const
+
+            const historyItems = toolsResult.model_affected.flatMap((affected) => {
+              const field =
+                modelFieldMap[affected.model as keyof typeof modelFieldMap]
+
+              if (!field || !affected.id?.length) {
+                return []
+              }
+
+              return affected.id.map((id) => ({
+                chatExecutionHistoryId: chatExec.id,
+                [field]: id,
+              }))
+            })
+
+            if (historyItems.length > 0) {
+              await prisma.chatExecutionHistoryItem.createMany({
+                data: historyItems,
+              })
+            }
           }
         }
       }

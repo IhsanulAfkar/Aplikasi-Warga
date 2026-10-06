@@ -1,11 +1,8 @@
 import { TChatExecutionHistory } from '@/types/chat'
 import { NextPage } from 'next'
 import {
-  BriefcaseBusiness,
-  CalendarDays,
   ChevronRight,
   Search,
-  User,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -17,13 +14,60 @@ interface Props {
   executionHistories: TChatExecutionHistory
 }
 
-const SourceRender: NextPage<Props> = ({ executionHistories }) => {
-  const residents = executionHistories.chatExecutionHistoryItems
-    .map((item) => item.resident || item.announcement || item.cashTransaction || item.duesBill || item.duesPeriod || item.duesType || item.familyCard || item.payment)
-    .filter(Boolean)
-  const columns = (residents.length
-    ? Object.keys(residents[0]!)
-    : []).filter(k => !['createdAt', 'updatedAt', 'id'].includes(k) && !k.endsWith('Id'))
+type SourceType =
+  | 'resident'
+  | 'announcement'
+  | 'cashTransaction'
+  | 'duesBill'
+  | 'duesPeriod'
+  | 'duesType'
+  | 'familyCard'
+  | 'payment'
+
+const sourceTypes: SourceType[] = [
+  'resident',
+  'announcement',
+  'cashTransaction',
+  'duesBill',
+  'duesPeriod',
+  'duesType',
+  'familyCard',
+  'payment',
+]
+
+const sourceLabels: Record<SourceType, string> = {
+  resident: 'Residents',
+  announcement: 'Announcements',
+  cashTransaction: 'Cash Transactions',
+  duesBill: 'Dues Bills',
+  duesPeriod: 'Dues Periods',
+  duesType: 'Dues Types',
+  familyCard: 'Family Cards',
+  payment: 'Payments',
+}
+
+const SourceRender: NextPage<Props> = ({
+  executionHistories,
+}) => {
+  const groupedSources = sourceTypes.reduce(
+    (acc, type) => {
+      const data = executionHistories.chatExecutionHistoryItems
+        .map((item) => item[type])
+        .filter(Boolean)
+
+      if (data.length > 0) {
+        acc[type] = data
+      }
+
+      return acc
+    },
+    {} as Partial<Record<SourceType, any[]>>
+  )
+
+  const totalResults = Object.values(groupedSources).reduce(
+    (total, items) => total + (items?.length ?? 0),
+    0
+  )
 
   const formatColumnName = (key: string) => {
     return key
@@ -32,16 +76,27 @@ const SourceRender: NextPage<Props> = ({ executionHistories }) => {
   }
 
   const formatValue = (key: string, value: unknown) => {
-    if (value === null || value === undefined || value === '') {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
       return '-'
     }
 
-    if (key.toLowerCase().includes('tanggal') || key.toLowerCase().includes('date')) {
-      return new Date(String(value)).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
+    if (
+      key.toLowerCase().includes('tanggal') ||
+      key.toLowerCase().includes('date')
+    ) {
+      const date = new Date(String(value))
+
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      }
     }
 
     if (typeof value === 'object') {
@@ -53,7 +108,7 @@ const SourceRender: NextPage<Props> = ({ executionHistories }) => {
 
   return (
     <Collapsible className="w-full max-w-md">
-      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-md py-1 text-left text-[10px] text-gray-500 hover:text-foreground ">
+      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-md py-1 text-left text-[10px] text-gray-500 hover:text-foreground">
         <ChevronRight className="size-3 transition-transform group-data-[state=open]:rotate-90" />
 
         <Search className="size-3 flex-none" />
@@ -63,47 +118,77 @@ const SourceRender: NextPage<Props> = ({ executionHistories }) => {
         </span>
 
         <span className="ml-auto shrink-0">
-          {residents.length} result{residents.length !== 1 ? 's' : ''}
+          {totalResults} result
+          {totalResults !== 1 ? 's' : ''}
         </span>
       </CollapsibleTrigger>
 
       <CollapsibleContent className="mt-1 pl-5">
-        <div className="max-w-full max-h-60 overflow-auto">
-          <table className="w-max min-w-full text-[10px]">
-            <thead>
-              <tr className="border-b border-gray-300 text-left text-muted-foreground">
-                {columns.map((column) => (
-                  <th
-                    key={column}
-                    className="whitespace-nowrap py-1.5 pr-4 font-medium"
-                  >
-                    {formatColumnName(column)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+        <div className="space-y-3">
+          {Object.entries(groupedSources).map(
+            ([type, items]) => {
+              if (!items?.length) return null
 
-            <tbody>
-              {residents.map((resident, index) => (
-                <tr
-                  key={resident!.id ?? index}
-                  className="border-b border-gray-300 last:border-0"
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={column}
-                      className="max-w-[180px] truncate whitespace-nowrap py-1.5 pr-4 text-muted-foreground"
-                    >
-                      {formatValue(
-                        column,
-                        (resident as Record<string, unknown>)[column]
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              const columns = Object.keys(items[0]).filter(
+                (key) =>
+                  ![
+                    'createdAt',
+                    'updatedAt',
+                    'id',
+                  ].includes(key) &&
+                  !key.endsWith('Id')
+              )
+
+              return (
+                <div key={type} className="min-w-0">
+                  <div className="mb-1 text-[10px] font-medium text-foreground">
+                    {sourceLabels[type as SourceType]}{' '}
+                    <span className="font-normal text-muted-foreground">
+                      ({items.length})
+                    </span>
+                  </div>
+
+                  <div className="max-h-60 max-w-full overflow-auto">
+                    <table className="w-max min-w-full text-[10px]">
+                      <thead>
+                        <tr className="border-b border-gray-300 text-left text-muted-foreground">
+                          {columns.map((column) => (
+                            <th
+                              key={column}
+                              className="whitespace-nowrap py-1.5 pr-4 font-medium"
+                            >
+                              {formatColumnName(column)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {items.map((item, index) => (
+                          <tr
+                            key={item.id ?? index}
+                            className="border-b border-gray-300 last:border-0"
+                          >
+                            {columns.map((column) => (
+                              <td
+                                key={column}
+                                className="max-w-[180px] truncate whitespace-nowrap py-1.5 pr-4 text-muted-foreground"
+                              >
+                                {formatValue(
+                                  column,
+                                  item[column]
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            }
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>

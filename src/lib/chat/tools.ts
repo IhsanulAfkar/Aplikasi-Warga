@@ -10,6 +10,11 @@ export type ToolsResult = {
     id: string[]
   }[], payload: any
 }
+const defaultToolResult: ToolsResult = {
+  method: '',
+  model_affected: [],
+  payload: {}
+}
 export const getCurrentDate = tool({
   description:
     `Mengembalikan tanggal dan waktu saat ini.
@@ -54,7 +59,7 @@ startDate dan endDate pada tool lain.`,
     }
   },
 })
-export const createGetAnnouncemensTools = (toolsResult: ToolsResult) => {
+export const createGetAnnouncemensTools = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mengambil daftar pengumuman warga.
 
@@ -160,25 +165,24 @@ startDate dan endDate.`,
           },
         ],
       });
-
-      toolsResult.method = 'GET_ANNOUNCEMENTS';
-
-      toolsResult.model_affected.push({
-        id: announcements.map((t) => t.id),
-        model: 'announcement',
-      });
-
-      toolsResult.payload = {
-        startDate,
-        endDate,
-        priority,
-      };
+      toolsResults.push({
+        method: "GET_ANNOUNCEMENTS",
+        model_affected: [{
+          id: announcements.map((t) => t.id),
+          model: 'announcement',
+        }],
+        payload: {
+          startDate,
+          endDate,
+          priority,
+        }
+      })
 
       return announcements;
     },
   })
 }
-export const createGetResident = (toolsResult: ToolsResult) => {
+export const createGetResident = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mengambil data:
   - warga
@@ -191,18 +195,19 @@ export const createGetResident = (toolsResult: ToolsResult) => {
           members: true
         }
       })
-      toolsResult.method = "GET_FAMILY_CARD";
-      toolsResult.model_affected.push({
-        id: kk.map(t => t.id),
-        model: "family_card"
+      toolsResults.push({
+        method: "GET_FAMILY_CARD",
+        model_affected: [{
+          id: kk.map(t => t.id),
+          model: "family_card"
+        }],
+        payload: {}
       })
-      toolsResult.payload = {};
-
       return kk;
     },
   })
 }
-export const createSearchResident = (toolsResult: ToolsResult) => {
+export const createSearchResident = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Mencari orang atau keluarga dari:
 - nama
@@ -224,21 +229,24 @@ export const createSearchResident = (toolsResult: ToolsResult) => {
           })
         },
       });
-      toolsResult.method = "SEARCH_RESIDENT";
-      toolsResult.model_affected.push({
-        id: residents.map(t => t.id),
-        model: "resident"
+      toolsResults.push({
+        method: "SEARCH_RESIDENT",
+        model_affected: [{
+          id: residents.map(t => t.id),
+          model: "resident"
+        }],
+        payload: {
+          name, gender
+        }
       })
-      toolsResult.payload = { name, gender };
-
       return residents;
     },
   })
 }
-export const createGetIuran = (toolsResult: ToolsResult) => {
+export const createGetIuran = (toolsResults: ToolsResult[]) => {
   return tool({
     description:
-      "Mencari daftar iuran warga. Bisa mencari transaksi, warga yang sudah/belum bayar, berdasarkan tanggal, nominal, status, nama warga, nama KK, atau periode. Semua filter bersifat opsional. Secara default hanya mengambil data terbatas. Gunakan getAll=true jika memang membutuhkan seluruh data iuran.",
+      "Mencari daftar iuran warga. Bisa mencari transaksi, warga yang sudah/belum bayar, berdasarkan tanggal, nominal, status, nama warga, atau nama KK. Semua filter bersifat opsional. Secara default hanya mengambil data terbatas. Gunakan getAll=true jika memang membutuhkan seluruh data iuran.",
 
     inputSchema: z.object({
       startDate: z
@@ -279,12 +287,6 @@ export const createGetIuran = (toolsResult: ToolsResult) => {
         .string()
         .optional()
         .describe("Nama kepala keluarga/KK, pencarian sebagian"),
-
-      period: z
-        .string()
-        .optional()
-        .describe("Nama periode iuran, misalnya Januari 2026"),
-
       getAll: z
         .boolean()
         .default(false)
@@ -309,7 +311,6 @@ export const createGetIuran = (toolsResult: ToolsResult) => {
       status,
       residentName,
       familyCardName,
-      period,
       getAll,
       limit,
     }) => {
@@ -322,19 +323,19 @@ export const createGetIuran = (toolsResult: ToolsResult) => {
             },
           }
           : {}),
-
         ...(status ? { status } : {}),
-
         ...(startDate || endDate
           ? {
-            createdAt: {
-              ...(startDate
-                ? { gte: new Date(`${startDate}T00:00:00.000`) }
-                : {}),
-              ...(endDate
-                ? { lte: new Date(`${endDate}T23:59:59.999`) }
-                : {}),
-            },
+            period: {
+              dueDate: {
+                ...(startDate
+                  ? { gte: new Date(`${startDate}T00:00:00.000`) }
+                  : {}),
+                ...(endDate
+                  ? { lte: new Date(`${endDate}T23:59:59.999`) }
+                  : {}),
+              },
+            }
           }
           : {}),
 
@@ -359,19 +360,7 @@ export const createGetIuran = (toolsResult: ToolsResult) => {
             },
           }
           : {}),
-
-        ...(period
-          ? {
-            period: {
-              periodName: {
-                contains: period,
-                mode: "insensitive",
-              },
-            },
-          }
-          : {}),
       };
-
       const bills = await prisma.duesBill.findMany({
         where,
         include: {
@@ -389,32 +378,29 @@ export const createGetIuran = (toolsResult: ToolsResult) => {
         },
         ...(getAll ? {} : { take: limit }),
       });
-      console.log(startDate, endDate, bills)
-      toolsResult.method = "GET_DUES";
-
-      toolsResult.model_affected.push({
-        id: bills.map((bill) => bill.id),
-        model: "dues_bill",
-      });
-
-      toolsResult.payload = {
-        startDate,
-        endDate,
-        minAmount,
-        maxAmount,
-        status,
-        residentName,
-        familyCardName,
-        period,
-        getAll,
-        limit: getAll ? undefined : limit,
-      };
-
+      toolsResults.push({
+        method: "GET_DUES",
+        model_affected: [{
+          id: bills.map((bill) => bill.id),
+          model: "dues_bill",
+        }],
+        payload: {
+          startDate,
+          endDate,
+          minAmount,
+          maxAmount,
+          status,
+          residentName,
+          familyCardName,
+          getAll,
+          limit: getAll ? undefined : limit,
+        }
+      })
       return bills;
     },
   })
 }
-export const createGetCashTransaction = (toolsResult: ToolsResult) => {
+export const createGetCashTransaction = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mengambil data transaksi kas warga.
 
@@ -519,26 +505,24 @@ jumlah pemasukan atau pengeluaran. Gunakan tool summary yang sesuai.`,
           transactionDate: "desc",
         },
       });
-
-      toolsResult.method = "GET_CASH_TRANSACTIONS";
-
-      toolsResult.model_affected.push({
-        id: transactions.map((t) => t.id),
-        model: "cash_transaction",
-      });
-
-      toolsResult.payload = {
-        startDate,
-        endDate,
-        minAmount,
-        maxAmount,
-      };
-
+      toolsResults.push({
+        method: "GET_CASH_TRANSACTIONS",
+        model_affected: [{
+          id: transactions.map((t) => t.id),
+          model: "cash_transaction",
+        }],
+        payload: {
+          startDate,
+          endDate,
+          minAmount,
+          maxAmount,
+        }
+      })
       return transactions;
     },
   })
 }
-export const createGetCashSummary = (toolsResult: ToolsResult) => {
+export const createGetCashSummary = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mendapatkan ringkasan keuangan kas warga.
   
@@ -571,13 +555,14 @@ export const createGetCashSummary = (toolsResult: ToolsResult) => {
         result.find(t => t.type === 'EXPENSE')?._sum.amount ?? 0;
 
       const balance = income - expense;
-
-      toolsResult.method = "GET_CASH_SUMMARY";
-      toolsResult.model_affected.push({
-        id: [],
-        model: "cash_transaction",
-      });
-      toolsResult.payload = {};
+      toolsResults.push({
+        method: "GET_CASH_SUMMARY",
+        model_affected: [{
+          id: [],
+          model: "cash_transaction",
+        }],
+        payload: {}
+      })
 
       return {
         income,
@@ -587,7 +572,7 @@ export const createGetCashSummary = (toolsResult: ToolsResult) => {
     },
   })
 }
-export const createGetCashTransactionsByCategory = (toolsResult: ToolsResult) => {
+export const createGetCashTransactionsByCategory = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mendapatkan ringkasan transaksi kas berdasarkan kategori.
   
@@ -709,22 +694,20 @@ export const createGetCashTransactionsByCategory = (toolsResult: ToolsResult) =>
 
       const expense =
         result.find(t => t.type === 'EXPENSE')?._sum.amount ?? 0;
-
-      toolsResult.method = 'GET_CASH_BY_CATEGORY';
-
-      toolsResult.model_affected.push({
-        id: [],
-        model: 'cash_transaction',
-      });
-
-      toolsResult.payload = {
-        category,
-        startDate,
-        endDate,
-        minAmount,
-        maxAmount,
-      };
-
+      toolsResults.push({
+        method: "GET_CASH_BY_CATEGORY",
+        model_affected: [{
+          id: [],
+          model: 'cash_transaction',
+        }],
+        payload: {
+          category,
+          startDate,
+          endDate,
+          minAmount,
+          maxAmount,
+        }
+      })
       return {
         category,
         startDate,
@@ -738,7 +721,7 @@ export const createGetCashTransactionsByCategory = (toolsResult: ToolsResult) =>
     },
   })
 }
-export const createGetImportantAnnouncements = (toolsResult: ToolsResult) => {
+export const createGetImportantAnnouncements = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mengambil pengumuman penting dari pengurus warga.
   
@@ -775,19 +758,19 @@ export const createGetImportantAnnouncements = (toolsResult: ToolsResult) => {
           publishDate: 'desc',
         },
       });
-
-      toolsResult.method = "GET_IMPORTANT_ANNOUNCEMENTS";
-      toolsResult.model_affected.push({
-        id: announcements.map(t => t.id),
-        model: "announcement",
-      });
-      toolsResult.payload = {};
-
+      toolsResults.push({
+        method: "GET_IMPORTANT_ANNOUNCEMENTS",
+        model_affected: [{
+          id: announcements.map(t => t.id),
+          model: "announcement",
+        }],
+        payload: {}
+      })
       return announcements;
     },
   })
 }
-export const createGetLatestAnnouncements = (toolsResult: ToolsResult) => {
+export const createGetLatestAnnouncements = (toolsResults: ToolsResult[]) => {
   return tool({
     description: `Gunakan tool ini untuk mengambil pengumuman terbaru yang masih berlaku.
   
@@ -824,14 +807,14 @@ export const createGetLatestAnnouncements = (toolsResult: ToolsResult) => {
         },
         take: 5,
       });
-
-      toolsResult.method = "GET_LATEST_ANNOUNCEMENTS";
-      toolsResult.model_affected.push({
-        id: announcements.map(t => t.id),
-        model: "announcement",
-      });
-      toolsResult.payload = {};
-
+      toolsResults.push({
+        method: "GET_LATEST_ANNOUNCEMENTS",
+        model_affected: [{
+          id: announcements.map(t => t.id),
+          model: "announcement",
+        }],
+        payload: {}
+      })
       return announcements;
     },
   })
