@@ -1,4 +1,4 @@
-import { tool, streamText, generateText, stepCountIs, convertToModelMessages } from 'ai';
+import { tool, streamText, generateText, stepCountIs, convertToModelMessages, toUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma'; // Your Prisma client path
 
@@ -175,7 +175,7 @@ export async function POST(req: Request) {
     });
     let aiChatId: string | null = null
     const toolsResults: ToolsResult[] = []
-    const result = await streamText({
+    const result = streamText({
       model: ollama(process.env.OLLAMA_MODEL!),
       providerOptions: {
         ollama: {
@@ -271,8 +271,13 @@ Do not make up information. If the information is unavailable, say so clearly.
         }
       }
     });
+    const uiStream = toUIMessageStream({
+      stream: result.stream,
+    });
 
-    return result.toUIMessageStreamResponse();
+    return createUIMessageStreamResponse({
+      stream: uiStream
+    });
   } catch (error) {
     console.error(error)
     return NextResponse.json({ message: "Server Error" }, { status: 500 })
